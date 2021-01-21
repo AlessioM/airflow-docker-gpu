@@ -21,6 +21,7 @@ from tempfile import TemporaryDirectory
 from typing import Dict, Iterable, List, Optional, Union
 
 from docker import APIClient, tls
+from docker.types import DeviceRequest
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -123,6 +124,11 @@ class DockerOperator(BaseOperator):
     :type tty: bool
     :param cap_add: Include container capabilities
     :type cap_add: list[str]
+    :param device_requests: device requests to docker runtime when creating Docker container.
+        eg. ``[docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])]``
+    :type device_requests: list[any]
+    :param runtime: Runtime to use with this container.
+    :type runtime: str
     """
 
     template_fields = ('command', 'environment', 'container_name')
@@ -166,6 +172,8 @@ class DockerOperator(BaseOperator):
         tty: bool = False,
         cap_add: Optional[Iterable[str]] = None,
         extra_hosts: Optional[Dict[str, str]] = None,
+        device_requests: Optional[List[DeviceRequest]] = None,
+        runtime: Optional[str] = None,
         **kwargs,
     ) -> None:
 
@@ -200,6 +208,9 @@ class DockerOperator(BaseOperator):
         self.tty = tty
         self.cap_add = cap_add
         self.extra_hosts = extra_hosts
+        self.device_requests = device_requests or []
+        self.runtime = runtime
+
         if kwargs.get('xcom_push') is not None:
             raise AirflowException("'xcom_push' was deprecated, use 'BaseOperator.do_xcom_push' instead")
 
@@ -243,6 +254,8 @@ class DockerOperator(BaseOperator):
                     mem_limit=self.mem_limit,
                     cap_add=self.cap_add,
                     extra_hosts=self.extra_hosts,
+                    device_requests=self.device_requests,
+                    runtime=self.runtime,
                 ),
                 image=self.image,
                 user=self.user,
@@ -269,9 +282,7 @@ class DockerOperator(BaseOperator):
             # duplicated conditional logic because of expensive operation
             ret = None
             if self.do_xcom_push:
-                ret = self.cli.logs(container=self.container['Id'], tail=('all' if self.xcom_all else 1))
-                if hasattr(ret, 'decode'):
-                    ret = ret.decode('utf-8')
+                ret = self.cli.logs(container=self.container['Id']) if self.xcom_all else line.encode('utf-8')
 
             if self.auto_remove:
                 self.cli.remove_container(self.container['Id'])

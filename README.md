@@ -20,5 +20,8 @@
 * task logs can be found in `./logs`
 
 # reproduce
+* uncomment line in docker-compose
+* update docker-py in the airflow_scheduler service:
+    * `pip install --upgrade docker>=4.3.0`
 * run dag `gpu_docker_dag`
 * task `no_gpu` fails, `with_gpu` succeeds

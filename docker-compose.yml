@@ -19,9 +19,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs/gpu_dag
+      - ./logs:/opt/airflow/logs/gpu_docker_dag
 # uncommend the following line for testing the fix      
-#      - ./gpu_docker.py:/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/docker/operators/docker.py
+      - ./gpu_docker.py:/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/docker/operators/docker.py
       
   airflow_webserver:
     image: apache/airflow:2.0.0-python3.8

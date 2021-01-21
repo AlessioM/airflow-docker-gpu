@@ -16,13 +16,13 @@ with DAG(
 
     no_gpu = DockerOperator(
         task_id='no_gpu',
-        image='nvidia/cuda:11.0-base',
+        image='nvidia/cuda:10.0-base',
         command="nvidia-smi",          
     )
 
     with_gpu = DockerOperator(
         task_id='with_gpu',
-        image='nvidia/cuda:11.0-base',
+        image='nvidia/cuda:10.0-base',        
         device_requests=[
             docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])
         ]            
