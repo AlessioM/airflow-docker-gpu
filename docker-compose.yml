@@ -1,0 +1,43 @@
+version: "3"
+services:
+
+  airflow_init:
+    image: apache/airflow:2.0.0-python3.8
+    entrypoint: 'bash -c "/entrypoint db init &&
+                          /entrypoint users create --username admin --password airflow --firstname airflow --lastname airflow --role Admin --email airflow@example.com
+                          "
+                '
+    env_file:
+      - airflow.env
+    
+  airflow_scheduler:
+    image: apache/airflow:2.0.0-python3.8    
+    user: "50000:999" # 999 is the GID of the host docker group, if not set: permission denied on docker socket in container
+    command: scheduler
+    env_file:
+      - airflow.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs/gpu_dag
+# uncommend the following line for testing the fix      
+#      - ./gpu_docker.py:/home/airflow/.local/lib/python3.8/site-packages/airflow/providers/docker/operators/docker.py
+      
+  airflow_webserver:
+    image: apache/airflow:2.0.0-python3.8
+    command: webserver
+    ports:
+      - "9090:8080"
+    env_file:
+      - airflow.env
+
+  postgres_airflow:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - "POSTGRES_USER=airflow"
+      - "POSTGRES_DB=airflow"
+      - "POSTGRES_PASSWORD=airflow"
+    volumes:
+      - ./postgres_data:/var/lib/postgres/data      
